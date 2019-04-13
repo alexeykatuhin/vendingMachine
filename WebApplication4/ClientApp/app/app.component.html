@@ -1,0 +1,62 @@
+﻿    <div>
+        <h2>Кошелек аппрата</h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <td>Ценность монеты</td>
+                    <td>Количество монет</td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let c of vmWallet">
+                    <td>{{c?.value}}</td>
+                    <td>{{c?.quantity}}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div>
+        <h2>Товары</h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <td>Название</td>
+                    <td>Цена</td>
+                    <td>Количество</td>
+                    <td></td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let c of products">
+                    <td>{{c?.name}}</td>
+                    <td>{{c?.price}}</td>
+                    <td>{{c?.quantity}}</td>
+                    <td (click)="buy(c)" class="btn">Купить</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div>
+        <h2>Кошелек клиента</h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <td>Ценность монеты</td>
+                    <td>Количество монет</td>
+                    <td></td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let c of customerWallet">
+                    <td>{{c?.value}}</td>
+                    <td>{{c?.quantity}}</td>
+                    <td (click) ="addCoin(c)" class="btn">Внести</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div *ngIf="currentMoney>0">
+        <h2>Внесенная сумма:</h2>
+        <h3>{{currentMoney}}</h3>
+        <button (click) ="returnMoney()" class="btn">Вернуть</button>
+    </div>
