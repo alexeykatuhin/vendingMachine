@@ -22,7 +22,7 @@ export class DataService {
     }
 
     returnMoney(sum: number) {
-        return this.http.post("/api/return", null);
+        return this.http.post("/api/return/" + sum, null);
     }
 
     buy(sum: number, product: Product) {

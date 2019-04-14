@@ -23,7 +23,7 @@ var DataService = /** @class */ (function () {
         return this.http.post("/api/addcoin", coin);
     };
     DataService.prototype.returnMoney = function (sum) {
-        return this.http.post("/api/return", null);
+        return this.http.post("/api/return/" + sum, null);
     };
     DataService.prototype.buy = function (sum, product) {
         return this.http.post("/api/buy/" + sum, product);
