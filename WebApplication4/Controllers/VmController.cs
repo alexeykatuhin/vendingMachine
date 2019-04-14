@@ -26,14 +26,22 @@ namespace WebApplication4.Controllers
         [HttpGet("/api/getdata")]
         public IActionResult GetData()
         {
-            return Ok(new
+            try
             {
-                vmWallet = db.Wallets.Where(x => x.User.Name == "VM" && x.Quantity > 0),
-                customerWallet = db.Wallets.Where(x => x.User.Name == "CUSTOMER" && x.Quantity > 0),
-                currentMoney = db.Wallets.Where(x => x.User.Name == "TEMP")
-                .ToList()
-                .GetSum()
-            });
+                return Ok(new
+                {
+                    vmWallet = db.Wallets.Where(x => x.User.Name == "VM" && x.Quantity > 0),
+                    customerWallet = db.Wallets.Where(x => x.User.Name == "CUSTOMER" && x.Quantity > 0),
+                    currentMoney = db.Wallets.Where(x => x.User.Name == "TEMP")       
+                    .ToList()      
+                    .GetSum()
+                });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500);
+            }
+
 
 
         }
@@ -41,89 +49,124 @@ namespace WebApplication4.Controllers
         [HttpGet("/api/products")]
         public IEnumerable<Product> GetProducts()
         {
-            return db.Products.Where(x=>x.Quantity>0).ToList();
+            try
+            {
+                return db.Products.Where(x => x.Quantity > 0).ToList();
+            }
+            catch (Exception)
+            {
+
+                return null;
+            }
+  
         }
 
         [HttpPost("/api/addcoin")]
         public IActionResult AddCoin([FromBody]Coins coin)
         {
-            var sameCoin = db.Wallets.FirstOrDefault(x => x.User.Name == "TEMP" && x.Value == coin.Value);
-            sameCoin.Quantity++;
+            try
+            {
+                var sameCoin = db.Wallets.FirstOrDefault(x => x.User.Name == "TEMP" && x.Value == coin.Value);
+                sameCoin.Quantity++;
 
-            var sameCoinVM = db.Wallets.FirstOrDefault(x => x.User.Name == "VM" && x.Value == coin.Value);
-            sameCoinVM.Quantity++;
+                var sameCoinVM = db.Wallets.FirstOrDefault(x => x.User.Name == "VM" && x.Value == coin.Value);
+                sameCoinVM.Quantity++;
 
-            var samwCoinUser = db.Wallets.FirstOrDefault(x => x.User.Name == "CUSTOMER" && x.Value == coin.Value);
-            samwCoinUser.Quantity--;
+                var samwCoinUser = db.Wallets.FirstOrDefault(x => x.User.Name == "CUSTOMER" && x.Value == coin.Value);
+                samwCoinUser.Quantity--;
 
-            db.SaveChanges();
+                db.SaveChanges();
 
-            return GetData();
+                return GetData();
+            }
+            catch (Exception)
+            {
+                return StatusCode(500);
+            }
+ 
         }
 
         [HttpPost("api/return/{sum}")]
         public IActionResult ReturnMoney(int sum)
         {
-            var tempWallet = this.tempWallet();         
-
-            var vmWallet = db.Wallets.Where(x => x.User.Name == "VM" && x.Quantity > 0)             
-                .OrderByDescending(x => x.Value)
-                .ToList();       
-
-            var customerWallet = db.Wallets.Where(x => x.User.Name == "CUSTOMER")
-               .ToList();
-
-            foreach (var item in vmWallet)
+            try
             {
-                var coins = sum / item.Value;
-                //можно отдать данной монетой
-                if (coins > 0 )
+                var tempWallet = this.tempWallet();
+
+                var vmWallet = db.Wallets.Where(x => x.User.Name == "VM" && x.Quantity > 0)
+                    .OrderByDescending(x => x.Value)
+                    .ToList();
+
+                var customerWallet = db.Wallets.Where(x => x.User.Name == "CUSTOMER")
+                   .ToList();
+
+                foreach (var item in vmWallet)
                 {
-                    //монет хватает
-                    if (coins<= item.Quantity)
+                    var coins = sum / item.Value;
+                    //можно отдать данной монетой
+                    if (coins > 0)
                     {
-                        sum -= item.Value * coins;
-                        item.Quantity -= coins;
-                        customerWallet.First(x => x.Value == item.Value).Quantity += coins;
+                        //монет хватает
+                        if (coins <= item.Quantity)
+                        {
+                            sum -= item.Value * coins;
+                            item.Quantity -= coins;
+                            customerWallet.First(x => x.Value == item.Value).Quantity += coins;
+                        }
+                        //монет не хватает
+                        else
+                        {
+                            sum -= item.Value * item.Quantity;
+                            item.Quantity = 0;
+                            customerWallet.First(x => x.Value == item.Value).Quantity += item.Quantity;
+                        }
                     }
-                    //монет не хватает
-                    else
-                    {
-                        sum -= item.Value * item.Quantity;
-                        item.Quantity = 0;
-                        customerWallet.First(x => x.Value == item.Value).Quantity += item.Quantity;
-                    }
+                    if (sum == 0)
+                        break;
                 }
-                if (sum == 0)
-                    break;
-            }
 
-            //все успешно
-            if (sum == 0)
-            {
-                //убираем из временного
-                tempWallet.ForEach(x => x.Quantity = 0);
-                db.SaveChanges();                
+                //все успешно
+                if (sum == 0)
+                {
+                    //убираем из временного
+                    tempWallet.ForEach(x => x.Quantity = 0);
+                    db.SaveChanges();
+                }
+                //нет монет для сдачи
+                else
+                {
+                    return StatusCode(500);
+                }
+
+
+                return GetData();
             }
-            //нет монет для сдачи
-            else
+            catch (Exception)
             {
+
                 return StatusCode(500);
             }
-
-
-            return GetData();
+          
         }
 
         [HttpPost("/api/buy/{money}")]
         public IActionResult Buy(int money, [FromBody]Product product)
         {
-            var tempWallet = this.tempWallet();
-            var sum = money - product.Price;
+            try
+            {
+                var tempWallet = this.tempWallet();
+                var sum = money - product.Price;
 
-            db.Products.First(x => x.Id == product.Id).Quantity--;
+                db.Products.First(x => x.Id == product.Id).Quantity--;
 
-            return ReturnMoney(sum);
+                return ReturnMoney(sum);
+            }
+            catch (Exception)
+            {
+
+                return StatusCode(500);
+            }
+     
         }
 
         private List<Coins> tempWallet()
