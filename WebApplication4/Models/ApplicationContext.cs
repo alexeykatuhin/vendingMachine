@@ -8,10 +8,9 @@ namespace WebApplication4.Models
 {
     public class ApplicationContext : DbContext
     {
-        static bool flag = false;
         public ApplicationContext(DbContextOptions<ApplicationContext> options)
             : base(options) {
-          
+      
             Database.EnsureCreated();
         }
         public DbSet<Coins> Wallets { get; set; }
